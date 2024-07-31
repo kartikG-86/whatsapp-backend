@@ -20,9 +20,8 @@ io.on('connection', async (socket) => {
         console.log(obj.userId)
     })
     socket.on('message', async (msgObj) => {
-        
+
         io.to(msgObj.toUserId).emit('receive-message', msgObj)
-        // io.to(msgObj.fromUserId).emit('receive-message', msgObj)
 
         const newMessage = await messageModel.create({
             fromUserId: msgObj.fromUserId,
@@ -49,13 +48,14 @@ io.on('connection', async (socket) => {
     })
 
     socket.on('join-group', async (msgObj) => {
+        console.log(msgObj)
         console.log('join-group', msgObj.groupId)
         socket.join(msgObj.groupId)
     })
 
     socket.on('get-updated-list', async (user) => {
         console.log("Your Id is ", user.id);
-    
+
         try {
             const response = await axios.get(`http://localhost:8000/api/connection/userList/${user.id}`);
             const userList = response.data; // Assuming response.data contains the user list
@@ -64,7 +64,7 @@ io.on('connection', async (socket) => {
             console.error('Error fetching user list:', err);
         }
     });
-    
+
 });
 
 eventEmitter.on('update-status', (userId, message) => {
