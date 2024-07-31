@@ -1,10 +1,11 @@
 const messageModel = require('../../models/message')
+const groupModel = require('../../models/group')
 const mongoose = require('mongoose')
 const getChatUserList = async (req, res) => {
     const userId = req.params.userId
+    console.log(userId)
 
-
-    const aggregation = [
+    const userListAggregation = [
         {
             '$match': {
                 '$or': [
@@ -21,15 +22,17 @@ const getChatUserList = async (req, res) => {
             }
         }, {
             '$group': {
-                '_id': '$toUserId',
+                '_id': {
+                    '$cond': [
+                        {
+                            '$eq': [
+                                '$fromUserId', new mongoose.Types.ObjectId(userId)
+                            ]
+                        }, '$toUserId', '$fromUserId'
+                    ]
+                },
                 'lastMessage': {
                     '$first': '$$ROOT'
-                }
-            }
-        }, {
-            '$match': {
-                '_id': {
-                    '$ne': new mongoose.Types.ObjectId(userId)
                 }
             }
         }, {
@@ -47,14 +50,10 @@ const getChatUserList = async (req, res) => {
         }, {
             '$addFields': {
                 'latestMessage': '$lastMessage.message',
-                'time': '$lastMessage.createdAt'
-            }
-        }, {
-            '$addFields': {
                 'time': {
                     '$dateToString': {
                         'format': '%H:%M',
-                        'date': '$time',
+                        'date': '$lastMessage.createdAt',
                         'timezone': 'Asia/Kolkata'
                     }
                 }
@@ -69,21 +68,62 @@ const getChatUserList = async (req, res) => {
         }
     ]
 
+    const groupListAggregation = [
+        {
+            '$match': {
+                $or: [{
+                    adminUserId: new mongoose.Types.ObjectId(userId)
+                }, {
+                    memberUserIds: new mongoose.Types.ObjectId(userId)
+                }]
+            },
+        }, {
+            '$addFields': {
+                'userName': '$name',
+                'time': {
+                    '$dateToString': {
+                        'format': '%H:%M',
+                        'date': '$createdAt',
+                        'timezone': 'Asia/Kolkata'
+                    }
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$_id',
+                'user': {
+                    '$push': '$$ROOT'
+                },
+                'time': {
+                    '$first': '$time'
+                }
+            }
+        }, {
+            '$unwind': {
+                'path': '$user',
+                'preserveNullAndEmptyArrays': false
+            }
+        }
+    ]
+
     try {
-        const userList = await messageModel.aggregate(aggregation)
-        console.log(userList)
-        if (userList && userList.length > 0) {
+        const userList = await messageModel.aggregate(userListAggregation)
+        const groupList = await groupModel.aggregate(groupListAggregation)
+        let newList = [...userList, ...groupList]
+
+        if (newList && newList.length > 0) {
             return res.json({
                 success: true,
-                message: "Here are your user list ",
-                userList: userList
+                message: "Here are your user and group list ",
+                userList: newList,
+
             })
         }
         else {
             return res.json({
                 success: true,
-                message: "No user available",
-                userList: userList
+                message: "No user and group available",
+                userList: newList
             })
         }
     } catch (err) {
