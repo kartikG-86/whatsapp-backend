@@ -34,28 +34,33 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('group-message-receive', async (msgObj) => {
+        console.log(msgObj)
         socket.join(msgObj.groupId)
         io.to(msgObj.groupId).emit('group-message', msgObj)
     })
 
     socket.on('create-group', async (msgObj) => {
         socket.join(msgObj.groupId)
-        console.log('group created')
 
         msgObj.userIds.map((userId) => {
             io.to(userId).emit('join-group-message', msgObj)
         })
     })
 
+    // Server-side code using Socket.IO
     socket.on('join-group', async (msgObj) => {
-        console.log(msgObj)
-        console.log('join-group', msgObj.groupId)
-        socket.join(msgObj.groupId)
-    })
+        console.log(msgObj);
+        console.log('join-group', msgObj.groupId);
+
+        if (msgObj.groupId) {
+            socket.join(msgObj.groupId);
+            console.log(`Socket ${socket.id} joined group ${msgObj.groupId}`);
+        } else {
+            console.error('Group ID is missing');
+        }
+    });
 
     socket.on('get-updated-list', async (user) => {
-        console.log("Your Id is ", user.id);
-
         try {
             const response = await axios.get(`http://localhost:8000/api/connection/userList/${user.id}`);
             const userList = response.data; // Assuming response.data contains the user list
