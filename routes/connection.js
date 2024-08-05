@@ -19,5 +19,9 @@ router.get('/userList/:userId', require('../controller/SocketConnection/chatUser
 // group
 router.post('/createGroup', require('../controller/SocketConnection/createGroup'))
 router.get('/getMemberList/:groupId', require('../controller/SocketConnection/getGroupMembers'))
+router.get('/groupMessages/:groupId',require('../controller/SocketConnection/getGroupMessage'))
+
+// delete message
+router.delete('/deleteMessage',require('../controller/SocketConnection/deleteMessage'))
 
 module.exports = router

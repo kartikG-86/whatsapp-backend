@@ -14,10 +14,18 @@ const MessageSchema = new Schema({
         type: String,
         required: true
     },
-    createdAt:{
-        type:Date,
-        default:Date.now
-    }
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    msgId: {
+        type: String
+    },
+    deleteType:{
+        type:String,
+        default:null
+    },
+
 })
 
 const Message = mongoose.model('messages', MessageSchema)

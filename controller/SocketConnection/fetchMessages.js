@@ -23,16 +23,29 @@ const getMessages = async (req, res) => {
                 'createdAt': 1
             }
         }, {
-            $addFields: {
-                time: {
-                    $dateToString: {
-                        format: "%H:%M", // 12-hour format with AM/PM
-                        date: "$createdAt",
-                        timezone: "Asia/Kolkata", // Adjust to your timezone
-                    },
-                },
-            },
-        }
+            '$addFields': {
+              'time': {
+                '$dateToString': {
+                  'format': '%H:%M', 
+                  'date': '$createdAt', 
+                  'timezone': 'Asia/Kolkata'
+                }
+              }, 
+              'date': {
+                '$dateToString': {
+                  'format': '%d/%m/%Y', 
+                  'date': '$createdAt'
+                }
+              }
+            }
+          }, {
+            '$group': {
+              '_id': '$date', 
+              'messages': {
+                '$push': '$$ROOT'
+              }
+            }
+          }
     ]
 
     try {

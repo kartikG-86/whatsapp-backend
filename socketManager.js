@@ -4,7 +4,7 @@ const axios = require('axios')
 const eventEmitter = new EventEmitter()
 const socketsMap = new Map();
 const messageModel = require('./models/message')
-
+const groupMessageModel = require('./models/groupMessage')
 const io = new Server({
     cors: {
         origin: '*',
@@ -27,7 +27,8 @@ io.on('connection', async (socket) => {
             fromUserId: msgObj.fromUserId,
             toUserId: msgObj.toUserId,
             message: msgObj.message,
-            createdAt: new Date()
+            createdAt: new Date(),
+            msgId: msgObj.msgId,
         })
         console.log(newMessage)
 
@@ -37,6 +38,8 @@ io.on('connection', async (socket) => {
         console.log(msgObj)
         socket.join(msgObj.groupId)
         io.to(msgObj.groupId).emit('group-message', msgObj)
+        const newMessage = await groupMessageModel.create(msgObj)
+        console.log(newMessage)
     })
 
     socket.on('create-group', async (msgObj) => {
@@ -69,6 +72,23 @@ io.on('connection', async (socket) => {
             console.error('Error fetching user list:', err);
         }
     });
+
+    socket.on('delete-message', async (msg) => {
+        console.log(msg)
+        const deletePayload = {
+            msgId: msg.msgId,
+            deleteType: msg.deleteType
+        }
+        try {
+            const response = await axios.delete(`http://localhost:8000/api/connection/deleteMessage`, { data: deletePayload });
+            console.log(response)
+            if (response.data.success && msg.deleteType == "everyone") {
+                io.to(msg.toUserId).emit('message-delete', msg)
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    })
 
 });
 
