@@ -37,7 +37,7 @@ io.on('connection', async (socket) => {
     socket.on('group-message-receive', async (msgObj) => {
         console.log(msgObj)
         socket.join(msgObj.groupId)
-        io.to(msgObj.groupId).emit('group-message', msgObj)
+        io.to(msgObj.groupId).emit('group-message', {...msgObj,createdAt:new Date()})
         const newMessage = await groupMessageModel.create(msgObj)
         console.log(newMessage)
     })
