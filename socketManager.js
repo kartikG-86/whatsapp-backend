@@ -20,8 +20,8 @@ io.on('connection', async (socket) => {
         console.log(obj.userId)
     })
     socket.on('message', async (msgObj) => {
-
-        io.to(msgObj.toUserId).emit('receive-message', msgObj)
+        console.log(msgObj)
+        io.to(msgObj.toUserId).emit('receive-message', {...msgObj,createdAt: new Date()})
 
         const newMessage = await messageModel.create({
             fromUserId: msgObj.fromUserId,

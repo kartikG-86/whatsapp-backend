@@ -1,6 +1,6 @@
 const groupMessageModel = require('../../models/groupMessage')
 const mongoose = require('mongoose')
-const getGroupMessages = async (req,res) => {
+const getGroupMessages = async (req, res) => {
   const groupId = req.params.groupId;
 
   const aggregation = [
@@ -12,7 +12,7 @@ const getGroupMessages = async (req,res) => {
       '$addFields': {
         'date': {
           '$dateToString': {
-            'format': '%d/%m/%Y', 
+            'format': '%d/%m/%Y',
             'date': '$createdAt'
           }
         }
@@ -23,7 +23,7 @@ const getGroupMessages = async (req,res) => {
       }
     }, {
       '$group': {
-        '_id': '$date', 
+        '_id': '$date',
         'messages': {
           '$push': '$$ROOT'
         }
@@ -32,26 +32,26 @@ const getGroupMessages = async (req,res) => {
   ]
   console.log(groupId)
 
-  try{
+  try {
     const groupMessages = await groupMessageModel.aggregate(aggregation);
-    if(groupMessages){
-        return res.json({
-            success:true,
-            message:"Here are your messages",
-            groupMessages:groupMessages
-        })
+    if (groupMessages) {
+      return res.json({
+        success: true,
+        message: "Here are your messages",
+        groupMessages: groupMessages
+      })
     }
-    else{
-        return res.status(400).json({
-            success:false,
-            message:"Error generated while fetching group Messages"
-        })
+    else {
+      return res.status(400).json({
+        success: false,
+        message: "Error generated while fetching group Messages"
+      })
     }
 
-  }catch(err){
+  } catch (err) {
     return res.status(400).json({
-        success:false,
-        message:"Error generated while fetching group Messages"
+      success: false,
+      message: "Error generated while fetching group Messages"
     })
   }
 }
