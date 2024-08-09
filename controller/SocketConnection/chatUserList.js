@@ -103,6 +103,49 @@ const getChatUserList = async (req, res) => {
                 'path': '$user',
                 'preserveNullAndEmptyArrays': false
             }
+        }, {
+            '$lookup': {
+                'from': 'groupmessages',
+                'localField': '_id',
+                'foreignField': 'groupId',
+                'as': 'groupMessages'
+            }
+        }, {
+            '$addFields': {
+                'lastMessage': {
+                    '$arrayElemAt': [
+                        {
+                            '$filter': {
+                                'input': {
+                                    '$slice': [
+                                        {
+                                            '$sortArray': {
+                                                'input': '$groupMessages',
+                                                'sortBy': {
+                                                    'createdAt': -1
+                                                }
+                                            }
+                                        }, 1
+                                    ]
+                                },
+                                'cond': {
+                                    '$gte': [
+                                        '$$this', null
+                                    ]
+                                }
+                            }
+                        }, 0
+                    ]
+                }
+            }
+        }, {
+            '$project': {
+                'groupMessages': 0
+            }
+        }, {
+            '$addFields': {
+                'latestMessage': '$lastMessage.message'
+            }
         }
     ]
 
